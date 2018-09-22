@@ -1,35 +1,41 @@
 ; Setup to write the contents of al in tty mode
 mov ah, 0x0e
 
-; Setup counter, inititalize to ASCII '0'
-mov bl, 0x30
+; Setup counter, inititalize to ASCII '9'
+mov cl, 0x39
 
-outLoop:
-	; Copy each character into a1 and raise an interrupt
-	mov al, 'H'
-	int 0x10
-	mov al, 'e'
-	int 0x10
-	mov al, 'l'
-	int 0x10
-	int 0x10 		; al still has 'l' in it
-	mov al, 'o'
-	int 0x10
-	mov al, ' '
-	int 0x10
+; Setup stack
+mov bp, 0x8000
+mov sp, bp
+
+pushLoop:
+	push 0xD
+	push 0xA
+	push ecx	; cl is the LSB of ecx
+	push ' '
+	push 'o'
+	push 'l'
+	push 'l'
+	push 'e'
+	push 'H'
+	dec cl			; Decrement counter
+	cmp cl, 0x30	; Check if equal to ASCII '0'
+	jge pushLoop		; If greater than or equal to '0', go back to top
+
+; Setup counter, initialize to 0
+mov cl, 0
+
+popLoop:
+	pop bx
 	mov al, bl
 	int 0x10
-	mov al, 0xA		; Newline
-	int 0x10
-	mov al, 0xD		; Carriage return
-	int 0x10
-	inc bl			; Increment counter
-	cmp bl, 0x39	; Check if equal to ASCII '9'
-	jle outLoop		; Go back to top if less than or equal to '9'
+	inc cl
+	cmp cl, 100
+	jl popLoop
 	
-end:
+infLoop:
 	; Infinite loop
-	jmp $
+	jmp infLoop
 
 ; Fill with 510 zeroes minus the above code
 times 510-($-$$) db 0
