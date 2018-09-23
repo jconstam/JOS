@@ -1,41 +1,43 @@
-; Setup to write the contents of al in tty mode
-mov ah, 0x0e
+; Set the offset to be bootsector code
+[org 0x7c00]
 
-; Setup counter, inititalize to ASCII '9'
-mov cl, 0x39
+; Print greeting message
+mov bx, HELLO
+call print_string
+call print_newline
 
-; Setup stack
-mov bp, 0x8000
-mov sp, bp
+call print_newline
 
-pushLoop:
-	push 0xD
-	push 0xA
-	push ecx	; cl is the LSB of ecx
-	push ' '
-	push 'o'
-	push 'l'
-	push 'l'
-	push 'e'
-	push 'H'
-	dec cl			; Decrement counter
-	cmp cl, 0x30	; Check if equal to ASCII '0'
-	jge pushLoop		; If greater than or equal to '0', go back to top
+mov dx, 0x1234
+call print_hex_4
+call print_newline
+mov dx, 0x12fe
+call print_hex_4
+call print_newline
+mov dx, 0xabcd
+call print_hex_4
+call print_newline
 
-; Setup counter, initialize to 0
-mov cl, 0
+call print_newline
 
-popLoop:
-	pop bx
-	mov al, bl
-	int 0x10
-	inc cl
-	cmp cl, 100
-	jl popLoop
+; Print farewell message
+mov bx, GOODBYE
+call print_string
+call print_newline
+
+; Infinite Loop
+jmp $
+
+; Include subroutines
+%include "src/boot/boot_sect_print.asm"
+%include "src/boot/boot_sect_print_hex.asm"
+
+; Data
+HELLO:
+	db 'Hello, World!', 0
 	
-infLoop:
-	; Infinite loop
-	jmp infLoop
+GOODBYE:
+	db 'Goodbye!', 0
 
 ; Fill with 510 zeroes minus the above code
 times 510-($-$$) db 0
